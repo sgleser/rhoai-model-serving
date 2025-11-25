@@ -1,0 +1,11 @@
+FROM registry.access.redhat.com/ubi9/ubi-micro:9.4
+
+# Build argument to specify which model to copy
+# Examples: madlad, t5-small
+ARG MODEL_NAME=madlad
+
+# Copy the specific model folder
+COPY ./models/${MODEL_NAME} /models/
+
+USER 1001
+

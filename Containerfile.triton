@@ -1,0 +1,16 @@
+FROM nvcr.io/nvidia/tritonserver:23.05-py3
+
+# Install Python dependencies for the Python backend
+# Note: Triton 23.05 uses CUDA 11.8, so we need torch built for CUDA 11.8
+RUN pip3 install --no-cache-dir \
+    torch==2.1.0+cu118 \
+    --index-url https://download.pytorch.org/whl/cu118 && \
+    pip3 install --no-cache-dir \
+    transformers==4.34.1 \
+    sentencepiece \
+    numpy
+
+# Set environment variables for HuggingFace cache
+ENV HF_HOME=/tmp/hf_cache
+ENV TRANSFORMERS_CACHE=/tmp/hf_cache
+

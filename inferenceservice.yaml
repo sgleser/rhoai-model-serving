@@ -1,0 +1,32 @@
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  annotations:
+    openshift.io/display-name: flan-t5-small-triton
+    serving.kserve.io/deploymentMode: RawDeployment
+  name: flan-t5-small-triton
+  labels:
+    opendatahub.io/dashboard: 'true'
+spec:
+  predictor:
+    maxReplicas: 1
+    minReplicas: 1
+    model:
+      modelFormat:
+        name: triton
+      name: ''
+      resources:
+        limits:
+          cpu: '2'
+          memory: 4Gi
+          nvidia.com/gpu: '1'
+        requests:
+          cpu: '1'
+          memory: 2Gi
+          nvidia.com/gpu: '1'
+      runtime: triton-transformers
+      storageUri: "oci://quay.io/rh_ee_sgleszer/flan-t5-small-triton-modelcar:0.0.3"
+    tolerations:
+      - effect: NoSchedule
+        key: nvidia.com/gpu
+        value: Tesla-T4-SHARED
