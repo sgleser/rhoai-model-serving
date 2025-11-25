@@ -51,6 +51,10 @@ spec:
           value: /tmp/hf_cache
         - name: TRANSFORMERS_CACHE
           value: /tmp/hf_cache
+        - name: TRITON_BACKEND_STUB_TIMEOUT_SECONDS
+          value: "600"
+        - name: OMP_NUM_THREADS
+          value: "4"
       command: [/bin/sh]
       args:
         - -c
@@ -71,7 +75,7 @@ spec:
           memory: 1Gi
         limits:
           cpu: "5"
-          memory: 1Gi
+          memory: 20Gi
       livenessProbe:
         # the server is listening only on 127.0.0.1, so an httpGet probe sent
         # from the kublet running on the node cannot connect to the server
@@ -87,7 +91,7 @@ spec:
             - --max-time
             - "9"
             - http://localhost:8000/v2/health/live
-        initialDelaySeconds: 5
+        initialDelaySeconds: 300
         periodSeconds: 30
         timeoutSeconds: 10
       readinessProbe:
@@ -100,11 +104,11 @@ spec:
             - --max-time
             - "9"
             - http://localhost:8000/v2/health/live
-        initialDelaySeconds: 5
+        initialDelaySeconds: 300
         periodSeconds: 30
         timeoutSeconds: 10
   builtInAdapter:
     serverType: triton
     runtimeManagementPort: 8001
     memBufferBytes: 134217728
-    modelLoadingTimeoutMillis: 90000
+    modelLoadingTimeoutMillis: 600000

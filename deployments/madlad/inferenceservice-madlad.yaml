@@ -1,0 +1,33 @@
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  annotations:
+    openshift.io/display-name: madlad400-3b-mt-triton
+    serving.kserve.io/deploymentMode: RawDeployment
+  name: madlad400-3b-mt-triton
+  labels:
+    opendatahub.io/dashboard: 'true'
+spec:
+  predictor:
+    maxReplicas: 1
+    minReplicas: 1
+    model:
+      modelFormat:
+        name: triton
+      name: ''
+      resources:
+        limits:
+          cpu: '2'
+          memory: 16Gi
+          nvidia.com/gpu: '1'
+        requests:
+          cpu: '1'
+          memory: 8Gi
+          nvidia.com/gpu: '1'
+      runtime: triton-transformers
+      storageUri: "oci://quay.io/rh_ee_sgleszer/madlad400-3b-mt-triton-modelcar:0.0.4"
+    tolerations:
+      - effect: NoSchedule
+        key: nvidia.com/gpu
+        value: Tesla-T4-SHARED
+
