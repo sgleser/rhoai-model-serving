@@ -1,4 +1,27 @@
 
+Docs used:
+
+[Quick Deploy: HuggingFace Transformers on Triton Inference Server (NVIDIA Docs)](https://docs.nvidia.com/deeplearning/triton-inference-server/user-guide/docs/tutorials/Quick_Deploy/HuggingFaceTransformers/README.html)
+
+[Python Backend Usage (NVIDIA Triton Inference Server docs)](https://docs.nvidia.com/deeplearning/triton-inference-server/user-guide/docs/python_backend/README.html#usage)
+
+[Example of Triton Python backend](https://github.com/triton-inference-server/tutorials/blob/main/HuggingFace/python_model_repository/python_vit/1/model.py)
+
+[Better way could be to use Triton Model Format](https://kserve.github.io/website/docs/model-serving/predictive-inference/frameworks/triton/huggingface)
+
+Triton Python backend example: https://github.com/triton-inference-server/python_backend/blob/main/examples/add_sub/model.py#L29-L33
+
+Can we have OpenAI API with Triton?
+It looks like there is something in Triton documentation:
+https://docs.nvidia.com/deeplearning/triton-inference-server/user-guide/docs/client_guide/openai_readme.html
+
+
+
+[Alternatively Seldon MLServer could be used with HF Transformers too](https://github.com/SeldonIO/MLServer/tree/master/runtimes/huggingface)
+
+
+----
+
 1. Download Model from hugging face into the right folder:
     /models
         /madlad
@@ -122,4 +145,20 @@ curl -k -X POST https://flan-t5-small-triton-<namespace>.apps.<cluster-domain>/v
 ```
 
 ```sh
+curl -k -X POST https://${ROUTE}/v2/models/flan-t5-small/infer \
+  -H "Content-Type: application/json" \
+  -d '{
+    "inputs": [
+      {
+        "name": "INPUT_TEXT",
+        "datatype": "BYTES",
+        "shape": [3, 1],
+        "data": [
+          "translate English to Spanish: Hello",
+          "translate English to French: Good morning",
+          "translate English to German: Thank you"
+        ]
+      }
+    ]
+  }'
 ```
