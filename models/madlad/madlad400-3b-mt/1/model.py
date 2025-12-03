@@ -80,8 +80,15 @@ class TritonPythonModel:
                 try:
                     target_lang_tensor = pb_utils.get_input_tensor_by_name(request, "TARGET_LANG")
                     if target_lang_tensor is not None:
-                        target_lang_bytes = target_lang_tensor.as_numpy()[0]
-                        target_lang = target_lang_bytes.decode('utf-8') if isinstance(target_lang_bytes, bytes) else target_lang_bytes
+                        target_langs_np = target_lang_tensor.as_numpy()
+                        # Handle batching: extract language code for each input
+                        if target_langs_np.dtype == np.object_:
+                            target_langs = [lang.decode('utf-8') if isinstance(lang, bytes) else str(lang) 
+                                          for lang in target_langs_np.flatten()]
+                        else:
+                            target_langs = target_langs_np.flatten().tolist()
+                        # Use first language code (assuming all same for now)
+                        target_lang = target_langs[0] if target_langs else None
                 except Exception:
                     pass
                 

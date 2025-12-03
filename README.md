@@ -162,3 +162,11 @@ curl -k -X POST https://${ROUTE}/v2/models/flan-t5-small/infer \
     ]
   }'
 ```
+
+
+Triton Features:
+
+Dynamic Batching.
+The model.py has to be prepared for that.
+After that we can add a config to config.pbxt file too.
+Details here: https://docs.nvidia.com/deeplearning/triton-inference-server/user-guide/docs/tutorials/Quick_Deploy/HuggingFaceTransformers/README.html#performance-analyzer
