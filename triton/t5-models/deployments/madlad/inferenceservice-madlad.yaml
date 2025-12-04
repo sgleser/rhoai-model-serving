@@ -25,7 +25,7 @@ spec:
           memory: 8Gi
           nvidia.com/gpu: '1'
       runtime: triton-transformers
-      storageUri: "oci://quay.io/rh_ee_sgleszer/madlad400-3b-mt-triton-modelcar:0.0.4"
+      storageUri: "oci://quay.io/rh_ee_sgleszer/madlad400-3b-mt-triton-modelcar:0.0.5"
     tolerations:
       - effect: NoSchedule
         key: nvidia.com/gpu

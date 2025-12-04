@@ -1,0 +1,44 @@
+# FLAN-T5-Small - Text-to-Text Generation
+# Model: https://huggingface.co/google/flan-t5-small
+# OpenAI API: /openai/v1/completions
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  annotations:
+    openshift.io/display-name: flan-t5-small-kservehuggingfaceserver
+    serving.kserve.io/deploymentMode: RawDeployment
+  name: flan-t5-small-kservehuggingfaceserver
+  labels:
+    opendatahub.io/dashboard: 'true'
+spec:
+  predictor:
+    maxReplicas: 1
+    minReplicas: 1
+    tolerations:
+      - effect: NoSchedule
+        key: nvidia.com/gpu
+        value: Tesla-T4-SHARED
+    model:
+      modelFormat:
+        name: huggingface
+      name: ''
+      args:
+        # Force HuggingFace backend (not vLLM) - T5 is not supported by vLLM
+        - --backend=huggingface
+        # T5 uses text2text_generation task
+        - --task=text2text_generation
+        # Data type for weights (float16 for GPU)
+        - --dtype=float16
+      resources:
+        limits:
+          cpu: '4'
+          memory: 4Gi
+          nvidia.com/gpu: '1'
+        requests:
+          cpu: '1'
+          memory: 2Gi
+          nvidia.com/gpu: '1'
+      runtime: flan-t5-small-kservehuggingfaceserver
+      # FLAN-T5-Small from Google (~300MB)
+      storageUri: "hf://google/flan-t5-small"
+

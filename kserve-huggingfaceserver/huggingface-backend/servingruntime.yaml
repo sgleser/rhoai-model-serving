@@ -1,0 +1,78 @@
+apiVersion: serving.kserve.io/v1alpha1
+kind: ServingRuntime
+metadata:
+  name: flan-t5-small-kservehuggingfaceserver
+  labels:
+    name: flan-t5-small-kservehuggingfaceserver
+  annotations:
+    openshift.io/display-name: "FLAN-T5-Small KServe HuggingFace Runtime (OpenAI API)"
+spec:
+  supportedModelFormats:
+    - name: huggingface
+      version: "1"
+      autoSelect: true
+
+  protocolVersions:
+    - v2
+    - grpc-v2
+
+  multiModel: false
+
+  containers:
+    - name: kserve-container
+      # KServe HuggingFace runtime - auto-selects CUDA or CPU image based on resources
+      # Official KServe image from Docker Hub: https://hub.docker.com/r/kserve/huggingfaceserver
+      # Use specific version for production, or check if RHOAI has pre-configured runtime
+      image: docker.io/kserve/huggingfaceserver:v0.14.0
+      env:
+        # Disable telemetry
+        - name: HF_HUB_DISABLE_TELEMETRY
+          value: "1"
+        # Faster model loading
+        - name: SAFETENSORS_FAST_GPU
+          value: "1"
+        # HuggingFace cache directory
+        - name: HF_HOME
+          value: /tmp/hf_cache
+        - name: TRANSFORMERS_CACHE
+          value: /tmp/hf_cache
+        # OpenAI API prefix (default: "openai", set to "" to remove)
+        - name: KSERVE_OPENAI_ROUTE_PREFIX
+          value: "openai"
+      resources:
+        requests:
+          cpu: 500m
+          memory: 2Gi
+        limits:
+          cpu: "4"
+          memory: 16Gi
+      ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+        - containerPort: 8081
+          name: grpc
+          protocol: TCP
+      livenessProbe:
+        httpGet:
+          path: /v2/health/live
+          port: 8080
+        initialDelaySeconds: 120
+        periodSeconds: 30
+        timeoutSeconds: 10
+        failureThreshold: 5
+      readinessProbe:
+        httpGet:
+          path: /v2/health/ready
+          port: 8080
+        initialDelaySeconds: 120
+        periodSeconds: 30
+        timeoutSeconds: 10
+        failureThreshold: 5
+
+  builtInAdapter:
+    serverType: huggingface
+    runtimeManagementPort: 8081
+    memBufferBytes: 134217728
+    modelLoadingTimeoutMillis: 600000
+
