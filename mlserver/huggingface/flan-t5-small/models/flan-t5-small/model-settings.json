@@ -1,0 +1,10 @@
+{
+  "name": "flan-t5-small",
+  "implementation": "mlserver_huggingface.HuggingFaceRuntime",
+  "parameters": {
+    "uri": "/mnt/models/flan-t5-small",
+    "extra": {
+      "task": "text2text-generation"
+    }
+  }
+}

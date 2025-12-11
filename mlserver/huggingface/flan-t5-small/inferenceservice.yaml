@@ -1,0 +1,37 @@
+# FLAN-T5-Small - Text-to-Text Generation
+# Model: https://huggingface.co/google/flan-t5-small
+# V2 Protocol: /v2/models/flan-t5-small/infer
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  annotations:
+    openshift.io/display-name: flan-t5-small-mlserver
+    serving.kserve.io/deploymentMode: RawDeployment
+  name: flan-t5-small-mlserver
+  labels:
+    opendatahub.io/dashboard: 'true'
+spec:
+  predictor:
+    maxReplicas: 1
+    minReplicas: 1
+    tolerations:
+      - effect: NoSchedule
+        key: nvidia.com/gpu
+        value: Tesla-T4-SHARED
+    model:
+      modelFormat:
+        name: mlserver
+      name: ''
+      resources:
+        limits:
+          cpu: '4'
+          memory: 4Gi
+          nvidia.com/gpu: '1'
+        requests:
+          cpu: '1'
+          memory: 2Gi
+          nvidia.com/gpu: '1'
+      runtime: mlserver-huggingface-flan-t5
+      # Model container with FLAN-T5-Small model and model-settings.json
+      # Build using Containerfile.modelcar
+      storageUri: "oci://quay.io/rh_ee_sgleszer/flan-t5-small-modelcar:0.0.6"

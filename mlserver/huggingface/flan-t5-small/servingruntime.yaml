@@ -1,0 +1,80 @@
+apiVersion: serving.kserve.io/v1alpha1
+kind: ServingRuntime
+metadata:
+  name: mlserver-huggingface-flan-t5
+  labels:
+    name: mlserver-huggingface-flan-t5
+  annotations:
+    openshift.io/display-name: "MLServer HuggingFace Runtime (FLAN-T5-Small)"
+spec:
+  supportedModelFormats:
+    - name: mlserver
+      version: "1"
+      autoSelect: true
+
+  protocolVersions:
+    - v2
+    - grpc-v2
+
+  multiModel: false
+
+  containers:
+    - name: kserve-container
+      # MLServer with HuggingFace runtime for transformer models
+      # Uses the official seldonio/mlserver image with HuggingFace support
+      image: docker.io/seldonio/mlserver:1.6.0-huggingface
+      env:
+        - name: MLSERVER_MODELS_DIR
+          value: /mnt/models
+        - name: MLSERVER_HTTP_PORT
+          value: "8080"
+        - name: MLSERVER_GRPC_PORT
+          value: "8081"
+        # HuggingFace cache directory
+        - name: HF_HOME
+          value: /tmp/hf_cache
+        - name: TRANSFORMERS_CACHE
+          value: /tmp/hf_cache
+        # Disable telemetry
+        - name: HF_HUB_DISABLE_TELEMETRY
+          value: "1"
+      command:
+        - mlserver
+        - start
+        - /mnt/models
+      resources:
+        requests:
+          cpu: 500m
+          memory: 2Gi
+        limits:
+          cpu: "4"
+          memory: 8Gi
+      ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+        - containerPort: 8081
+          name: grpc
+          protocol: TCP
+      livenessProbe:
+        httpGet:
+          path: /v2/health/live
+          port: 8080
+        initialDelaySeconds: 60
+        periodSeconds: 30
+        timeoutSeconds: 10
+        failureThreshold: 5
+      readinessProbe:
+        httpGet:
+          path: /v2/health/ready
+          port: 8080
+        initialDelaySeconds: 60
+        periodSeconds: 30
+        timeoutSeconds: 10
+        failureThreshold: 5
+
+  builtInAdapter:
+    serverType: mlserver
+    runtimeManagementPort: 8081
+    memBufferBytes: 134217728
+    modelLoadingTimeoutMillis: 300000

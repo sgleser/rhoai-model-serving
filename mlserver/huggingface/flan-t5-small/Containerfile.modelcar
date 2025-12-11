@@ -1,0 +1,31 @@
+# Model container for FLAN-T5-Small with MLServer HuggingFace Runtime
+# Downloads model from HuggingFace Hub using huggingface_hub
+#
+# Build: podman build -t quay.io/rh_ee_sgleszer/flan-t5-small-modelcar:0.0.7 -f Containerfile.modelcar .
+# Push: podman push quay.io/rh_ee_sgleszer/flan-t5-small-modelcar:0.0.7
+
+FROM registry.access.redhat.com/ubi9/python-311:latest AS builder
+
+USER 0
+
+# Install huggingface_hub
+RUN pip install --no-cache-dir huggingface_hub
+
+# Download the FLAN-T5-Small model to a subdirectory
+# MLServer auto-discovers models in subdirectories with model-settings.json
+RUN python -c "from huggingface_hub import snapshot_download; snapshot_download('google/flan-t5-small', local_dir='/models/flan-t5-small')"
+
+# Copy model-settings.json to the model subdirectory
+COPY models/flan-t5-small/model-settings.json /models/flan-t5-small/
+
+# Final minimal image
+FROM registry.access.redhat.com/ubi9-micro:latest
+
+# Copy model files from builder
+COPY --from=builder /models /models
+
+# Labels
+LABEL name="flan-t5-small-modelcar" \
+      version="0.0.7" \
+      summary="FLAN-T5-Small Model for MLServer HuggingFace Runtime" \
+      description="Model container with google/flan-t5-small for text-to-text generation"
