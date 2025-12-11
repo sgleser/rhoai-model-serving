@@ -21,7 +21,6 @@ spec:
   containers:
     - name: kserve-container
       # MLServer with HuggingFace runtime for transformer models
-      # Uses the official seldonio/mlserver image with HuggingFace support
       image: docker.io/seldonio/mlserver:1.6.0-huggingface
       env:
         - name: MLSERVER_MODELS_DIR
@@ -38,10 +37,61 @@ spec:
         # Disable telemetry
         - name: HF_HUB_DISABLE_TELEMETRY
           value: "1"
+      # Wait for model files to be available, then start MLServer and load model
       command:
-        - mlserver
-        - start
-        - /mnt/models/flan-t5-small
+        - /bin/bash
+        - -c
+        - |
+          # Wait for model files to be fully available
+          echo "Waiting for model files..."
+          until [ -f /mnt/models/flan-t5-small/model-settings.json ]; do
+            echo "Model files not ready yet, waiting..."
+            sleep 2
+          done
+          echo "Model files found!"
+          
+          # Debug: list what's in the models directory
+          echo "=== Contents of /mnt/models ==="
+          ls -la /mnt/models/
+          echo "=== Contents of /mnt/models/flan-t5-small ==="
+          ls -la /mnt/models/flan-t5-small/ | head -10
+          echo "=== model-settings.json ==="
+          cat /mnt/models/flan-t5-small/model-settings.json
+          echo "=== settings.json ==="
+          cat /mnt/models/settings.json
+          
+          # Start MLServer in background
+          mlserver start /mnt/models &
+          MLSERVER_PID=$!
+          
+          # Wait for MLServer to be ready
+          echo "Waiting for MLServer to start..."
+          for i in {1..120}; do
+            if curl -s http://localhost:8080/v2/health/ready > /dev/null 2>&1; then
+              echo "MLServer is ready after $i checks, waiting 5s then loading model..."
+              sleep 5
+              
+              # Check repository
+              echo "Repository before load:"
+              curl -s -X POST http://localhost:8080/v2/repository/index -d '{}' -H "Content-Type: application/json"
+              echo ""
+              
+              # Load the model
+              echo "Loading model..."
+              curl -s -X POST http://localhost:8080/v2/repository/models/flan-t5-small/load
+              echo ""
+              
+              # Check again
+              echo "Repository after load:"
+              curl -s -X POST http://localhost:8080/v2/repository/index -d '{}' -H "Content-Type: application/json"
+              echo ""
+              break
+            fi
+            sleep 1
+          done
+          
+          # Keep container running
+          wait $MLSERVER_PID
       resources:
         requests:
           cpu: 500m
@@ -60,7 +110,7 @@ spec:
         httpGet:
           path: /v2/health/live
           port: 8080
-        initialDelaySeconds: 60
+        initialDelaySeconds: 180
         periodSeconds: 30
         timeoutSeconds: 10
         failureThreshold: 5
@@ -68,7 +118,7 @@ spec:
         httpGet:
           path: /v2/health/ready
           port: 8080
-        initialDelaySeconds: 60
+        initialDelaySeconds: 180
         periodSeconds: 30
         timeoutSeconds: 10
         failureThreshold: 5
@@ -77,4 +127,4 @@ spec:
     serverType: mlserver
     runtimeManagementPort: 8081
     memBufferBytes: 134217728
-    modelLoadingTimeoutMillis: 300000
+    modelLoadingTimeoutMillis: 600000
