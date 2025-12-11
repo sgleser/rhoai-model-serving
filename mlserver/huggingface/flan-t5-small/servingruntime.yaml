@@ -41,7 +41,7 @@ spec:
       command:
         - mlserver
         - start
-        - /mnt/models
+        - /mnt/models/flan-t5-small
       resources:
         requests:
           cpu: 500m

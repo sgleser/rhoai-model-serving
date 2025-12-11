@@ -1,0 +1,5 @@
+{
+  "debug": true,
+  "parallel_workers": 0,
+  "gzip_enabled": false
+}
